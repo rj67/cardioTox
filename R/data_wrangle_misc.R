@@ -1,7 +1,7 @@
 #################################################################################################
 # read the expression matrix
 counts2DF <- function(counts_file){
-  eset <- read.delim2(file=counts_file)
+  eset <- read.delim2(file=counts_file, stringsAsFactor=F)
   
   # create df for experimental condition
   phenoData <- data.frame(ID = colnames(eset[2:ncol(eset)]))
