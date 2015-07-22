@@ -9,9 +9,10 @@ counts2DF <- function(counts_file){
   phenoData$drug <- sapply( phenoData$treatment, function(x) gsub("[0-9]","", x))
   phenoData$dose <- sapply( phenoData$treatment, function(x) as.numeric(gsub("[A-Z]","", x, ignore.case=T)))
   phenoData$dose[is.na(phenoData$dose)] <- 1
-  phenoData$treatment <- NULL
   phenoData$time <- sapply(phenoData$ID, function(x) as.numeric(strsplit(strsplit(x, split=".", fixed=T)[[1]][2], split="_", fixed=T)[[1]][1]))
   phenoData$rep <- sapply(phenoData$ID, function(x) strsplit(strsplit(x, split=".", fixed=T)[[1]][2], split="_", fixed=T)[[1]][2])
+  phenoData$condi <- with(phenoData, paste(treatment, time, sep="."))
+  phenoData$treatment <- NULL
   rownames(phenoData) <- phenoData$ID
   
   # reshape eset into long data frame
@@ -31,15 +32,15 @@ df2Eset <- function(df, pData, value="count"){
   return(eset)
 }
 
-# function quantile normalize expression Matrix
-qnEset <- function(eset){
-  library(preprocessCore)
-  eset.n <- normalize.quantiles(exprs(eset)) 
-  colnames(eset.n) <- colnames(exprs(eset))
-  rownames(eset.n) <- rownames(exprs(eset))
-  eset.n <- ExpressionSet(assayData = eset.n , phenoData = new("AnnotatedDataFrame", data=pData(eset)))
-  return(eset.n)
-}
+# # function quantile normalize expression Matrix
+# qnEset <- function(eset){
+#   library(preprocessCore)
+#   eset.n <- normalize.quantiles(exprs(eset)) 
+#   colnames(eset.n) <- colnames(exprs(eset))
+#   rownames(eset.n) <- rownames(exprs(eset))
+#   eset.n <- ExpressionSet(assayData = eset.n , phenoData = new("AnnotatedDataFrame", data=pData(eset)))
+#   return(eset.n)
+# }
 
 # reshape normalized eset into long data frame
 eset2DF <- function(eset, value="count"){
@@ -52,16 +53,16 @@ eset2DF <- function(eset, value="count"){
   df %<>% plyr::join(., pData(eset), by="ID")
   return(df)
 }
-
-# use the tools in EdgeR to normalize between array
-normalizeEdgeR <- function(eset){
-  library(edgeR)
-  # TMM scaling factor
-  # make sure eset is l
-  TMM <- calcNormFactors(DGEList(eset), method="TMM")$samples
-  exprs(eset) <- t(apply(exprs(eset), 1, function(x) x/(TMM$lib.size * TMM$norm.factors)*1e+6))
-  return(eset)
-}
+# 
+# # use the tools in EdgeR to normalize between array
+# normalizeEdgeR <- function(eset){
+#   library(edgeR)
+#   # TMM scaling factor
+#   # make sure eset is l
+#   TMM <- calcNormFactors(DGEList(eset), method="TMM")$samples
+#   exprs(eset) <- t(apply(exprs(eset), 1, function(x) x/(TMM$lib.size * TMM$norm.factors)*1e+6))
+#   return(eset)
+# }
 
 
 # use the tools in EdgeR to normalize between array

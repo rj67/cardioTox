@@ -13,6 +13,7 @@ plotEset<-function(eset, df){
     gene_ids <- df
   }
   print(gene_ids)
+  if(length(gene_ids)>10) stop("too many genes")
   mt_df <- as.data.frame(exprs(eset)[gene_ids,])
   mt_df$Gene <- rownames(mt_df)
   # convert mt_df to long table
