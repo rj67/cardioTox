@@ -1,10 +1,10 @@
 #################################################################################################
 # read the expression matrix
 counts2DF <- function(counts_file){
-  eset <- read.delim2(file=counts_file, stringsAsFactor=F)
+  eset <- read.delim2(file=counts_file)
   
   # create df for experimental condition
-  phenoData <- data.frame(ID = colnames(eset[2:ncol(eset)]))
+  phenoData <- data.frame(ID = colnames(eset[2:ncol(eset)]), stringsAsFactor=F)
   phenoData$treatment <- sapply(phenoData$ID, function(x) strsplit(x, split=".", fixed=T)[[1]][1])
   phenoData$drug <- sapply( phenoData$treatment, function(x) gsub("[0-9]","", x))
   phenoData$dose <- sapply( phenoData$treatment, function(x) as.numeric(gsub("[A-Z]","", x, ignore.case=T)))
