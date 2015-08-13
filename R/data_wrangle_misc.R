@@ -8,7 +8,7 @@ counts2DF <- function(counts_file){
   phenoData$treatment <- sapply(phenoData$ID, function(x) strsplit(x, split=".", fixed=T)[[1]][1])
   phenoData$drug <- sapply( phenoData$treatment, function(x) gsub("[0-9]","", x))
   phenoData$dose <- sapply( phenoData$treatment, function(x) as.numeric(gsub("[A-Z]","", x, ignore.case=T)))
-  phenoData$dose[is.na(phenoData$dose)] <- 1
+  phenoData$dose[is.na(phenoData$dose)] <- 0
   phenoData$time <- sapply(phenoData$ID, function(x) as.numeric(strsplit(strsplit(x, split=".", fixed=T)[[1]][2], split="_", fixed=T)[[1]][1]))
   phenoData$rep <- sapply(phenoData$ID, function(x) strsplit(strsplit(x, split=".", fixed=T)[[1]][2], split="_", fixed=T)[[1]][2])
   phenoData$condi <- with(phenoData, paste(treatment, time, sep="."))

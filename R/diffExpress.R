@@ -17,7 +17,7 @@ library(splines)
 # ctr.top$Gene <- rownames(ctr.top)
 
 
-diffExpress<-function(eset, spline_df=2, pval_cutoff=0.001, maxFC_cutoff=0.4){
+diffExpress<-function(eset, spline_df=2, pval_cutoff=0.01, maxFC_cutoff=0.4){
   library(splines)
   times <- pData(eset)$time
   X <- ns(times, df=spline_df)
@@ -51,17 +51,26 @@ diffExpress<-function(eset, spline_df=2, pval_cutoff=0.001, maxFC_cutoff=0.4){
   # remove genes with low expression change
   treat.top <- subset(treat.top, abs(maxFC)>maxFC_cutoff)
 
-  vec2df <-function(vec, keyname, value){
-    df <- data.frame(V1=names(vec), V2=vec)
-    colnames(df) <- c(keyname, value)
-    return(df)
-  }
-  all.cluster <-  hclust(as.dist(1 - cor(t(as.matrix(eset[treat.top$Gene,])))), method="ward.D")
-  plot(all.cluster)
-  #treat.top <- plyr::join(treat.top,  vec2df(sapply(cutree(all.cluster, k=6), function(x) paste("c", x, sep="")), "Gene", "cluster"), by="Gene")
-  treat.top <- plyr::join(treat.top,  vec2df(sapply(cutree(all.cluster, h=100), function(x) paste("c", x, sep="")), "Gene", "cluster"), by="Gene")
+  # test concentration dependence at 1 day
+  dose_vec <- pData(eset[, pData(eset)$time==24 &  pData(eset)$dose!=0])$dose
+  exp_dose <- exprs(eset[, pData(eset)$time==24 &  pData(eset)$dose!=0])[treat.top$Gene, ]
+  #dose_cor <- do.call(rbind, apply(exp_24, 1, function(x)   tidy(lm(log2(x+0.5) ~ dose_24))[2,c("statistic", "p.value")]))
+  treat.top$dose.pval <- apply(exp_dose, 1, function(x)  dcov.test(log2(x + 0.5), dose_vec)$p.value )
+  time_vec <- pData(eset[, pData(eset)$dose==3 ])$time
+  exp_time <- exprs(eset[, pData(eset)$dose==3 ])[treat.top$Gene, ]
+  treat.top$time.pval <- apply(exp_time, 1, function(x)  dcov.test(log2(x + 0.5), time_vec)$p.value )
+  
+  print(with(treat.top, table(dose.pval<0.1, time.pval<0.1)))
+  #vec2df <-function(vec, keyname, value){
+  #  df <- data.frame(V1=names(vec), V2=vec)
+  #  colnames(df) <- c(keyname, value)
+  #  return(df)
+  #}
+  #all.cluster <-  hclust(as.dist(1 - cor(t(as.matrix(eset[treat.top$Gene,])))), method="ward.D")
+  #plot(all.cluster)
+  #treat.top <- plyr::join(treat.top,  vec2df(sapply(cutree(all.cluster, h=100), function(x) paste("c", x, sep="")), "Gene", "cluster"), by="Gene")
+  #print(table(treat.top$cluster))
   print(nrow(treat.top))
-  print(table(treat.top$cluster))
   return(treat.top)
 }
 
