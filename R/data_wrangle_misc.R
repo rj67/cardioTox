@@ -1,7 +1,22 @@
 #################################################################################################
-# read the expression matrix
+# counts2DF <- function(counts_file, sample_file){
+#   eset <- read.delim2(file = counts_file)
+#   eset$Gene <- rownames(eset)
+#   
+#   phenoData <- read.delim2(file = sample_file)
+#   phenoData$batch <- factor(phenoData$batch)
+#   rownames(phenoData) <- phenoData$ID
+#   # reshape eset into long data frame
+#   eset.l <- reshape2::melt(eset, id.vars="Gene", variable.name="ID", value.name="count")
+#   eset.l$logFC <- log(eset.l$count + 0.5, 2)
+#   eset.l %<>% plyr::join(., phenoData, by="ID")
+#   return(list(eset.l, phenoData))
+# }
+
+# # read the expression matrix
 counts2DF <- function(counts_file){
-  eset <- read.delim2(file=counts_file)
+  N_cols <- scan(file=counts_file, what = "character", nlines = 1)
+  eset <- read.delim(file=counts_file, colClasses = c("character", rep("numeric", length(N_cols) - 1)))
   
   # create df for experimental condition
   phenoData <- data.frame(ID = colnames(eset[2:ncol(eset)]), stringsAsFactors=F)
@@ -20,6 +35,10 @@ counts2DF <- function(counts_file){
   eset.l$logFC <- log(eset.l$count + 0.5, 2)
   eset.l %<>% plyr::join(., phenoData, by="ID")
   return(list(eset.l, phenoData))
+}
+
+subSampleDF <- function(df, by_factor = 10){
+  return(df[sample(1:nrow(df), floor(nrow(df)/by_factor), replace = F), ])
 }
 
 # function to cast long df into matrix, then convert to ExpressionSet
@@ -70,6 +89,7 @@ normalizeDESeq <- function(eset){
   library(DESeq)
   # DESeq scaling factor
   norm.factors <- estimateSizeFactorsForMatrix(exprs(eset))
+  print(norm.factors)
   exprs(eset) <- t(apply(exprs(eset), 1, function(x) x / norm.factors))
   return(eset)
 }
@@ -78,7 +98,7 @@ normalizeDESeq <- function(eset){
 # Combat remove batch effect
 useComBat <- function(eset){
   library(sva)
-  batch = factor(pData(eset)$rep==3)
+  batch = factor(pData(eset)$rep)
   modcombat = model.matrix(~1, data=pData(eset))
   # eset is count data, take log2
   combat_edata = ComBat(dat=log(exprs(eset)+0.5, 2), batch=batch, mod=modcombat, par.prior=T, prior.plots=T)

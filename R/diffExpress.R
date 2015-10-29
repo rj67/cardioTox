@@ -19,13 +19,14 @@ library(splines)
 
 diffExpress<-function(eset, spline_df=2, pval_cutoff=0.01, maxFC_cutoff=0.4){
   library(splines)
+  library(energy)
   times <- pData(eset)$time
   X <- ns(times, df=spline_df)
   # square root dose
   #TreatC <- sapply(pData(eset.w)$dose, function(x) sqrt(x))
   # log dose
   TreatC <- sapply(pData(eset)$dose, function(x) ifelse(x==0, 0, log10(x)+1))
-
+  print(TreatC)
   ###
   ### Top DE genes in treatment groups
   ###
